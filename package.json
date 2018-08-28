@@ -1,0 +1,19 @@
+{
+  "name": "webcompiler",
+  "version": "1.0.0",
+  "description": "Compile code online. Uses python on the backend and xterm.js terminal emulator on the frontend. Useful for online (code) judges, programming sites.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sknepal/webcompiler.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sknepal/webcompiler/issues"
+  },
+  "homepage": "https://github.com/sknepal/webcompiler#readme"
+}

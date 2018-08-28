@@ -6,7 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
-	<link rel="stylesheet" href="xterm/dist/xterm.css" />
+	<link rel="stylesheet" href="node_modules/xterm/dist/xterm.css" />
 	<style>
 
 @media only screen and (max-width: 558px) {
@@ -31,8 +31,8 @@ border-bottom: 1px solid #586473;
 		}
 		</style>
 
-	<script src="https://cdn.jsdelivr.net/xterm/2.6.0/xterm.js"></script>
-	<script src="xterm/dist/addons/terminado/terminado.js"></script>
+	<script src="node_modules/xterm/dist/xterm.js"></script>
+	<script src="node_modules/xterm/dist/addons/terminado/terminado.js"></script>
 	<script src="https://cdn.jsdelivr.net/ace/1.2.6/min/ace.js" type="text/javascript" charset="utf-8"></script>
 	<script src="https://cdn.jsdelivr.net/jquery/1.12.4/jquery.min.js" type="text/javascript"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" type="text/javascript"></script></head>
@@ -69,11 +69,12 @@ border-bottom: 1px solid #586473;
 								<div id="ace-editor"></div>
 						</div>
 						<div class="tab-pane" id="output">
-								<div id="terminal-container"> </div>
+								
 						
 								<textarea rows="5" cols="10" class="code" name="ace-editor" style="display: none;"></textarea>
 						</div>
 					</div>
+					<div id="terminal-container"> </div>
 				</div>
 
 		</div>
@@ -88,7 +89,7 @@ var code;
 	
 	var editor = ace.edit("ace-editor");
     var terminalOn = 'false';
-    var term = new Terminal();
+   
 	var CodeEditor = {};
 	var firstLoad = 'true';
 	CodeEditor.init = function() {
@@ -106,7 +107,7 @@ var code;
 	
 	var textarea = $('textarea[name="ace-editor"]');
     var isTermLoaded = function(language){
-        if ((term.title != "try@host: ~") && (term.title != "try@host: /home/try")) {
+        if ((term.title != "groot@yesalam: ~") && (term.title != "groot@yesala: /home/groot")) {
 			return false;
         } else {			
             term.focus();
@@ -126,7 +127,8 @@ var code;
 	}
 	
 	var initTerm = function(){
-        $('#terminal-container').text("Executing your code....");
+        //$('#terminal-container').text("Executing your code....");
+        
         var protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
             socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + "/websocket";
         sock = new WebSocket(socketURL);
@@ -141,6 +143,25 @@ var code;
         });
 		
         term.open(document.getElementById('terminal-container'));
+	}
+	
+	var initTerm2 = function(file){
+		terminado.apply(Terminal);
+   		 var term = new Terminal();
+	 var protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
+         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + "/websocket/?file=" + encodeURI(file);
+     sock = new WebSocket(socketURL);
+     sock.addEventListener('open', function() {
+         term.terminadoAttach(sock);
+     });
+
+
+
+     term.on('open', function(){
+		heartbeatIntervalId = setInterval(heartbeat, 100);
+     });
+	
+     term.open(document.getElementById('terminal-container'));
 	}
 	
 	
@@ -184,11 +205,37 @@ var code;
 	
 	var heartbeatIntervalId;
 	
+	var runTC = function(filename){
+		var code = encodeURI(textarea.val().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"'));
+	         $.ajax({
+	             type: 'POST',
+	             url: 'http://localhost:81/C/',
+	             dataType: 'json',
+	             data: JSON.stringify({
+	                 "code": code
+	             }),
+	             contentType: "application/json",
+	             cache: false
+	         }).done(function(data, textStatus, xhr) {
+				 	var cmd = "gcc -w " + data[0].file + ".c" + " -o " + data[0].file + " -lm && ./" + data[0].file + " || echo "
+	 	      	   initTerm2(data[0].file);         
+	         }).fail(function(data, textStatus, xhr) {
+	 	    term.reset();
+	 	    term.clear();
+	             term.writeln("\n\nThere seems to be something wrong with this program.");
+	 	    term.writeln("\nPlease report the error at ... and we will fix it as soon as possible.");
+	         });
+        
+        
+	}
+	
+	
+	
    var runC = function(){
    var code = encodeURI(textarea.val().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"'));
         $.ajax({
             type: 'POST',
-            url: 'https://host:81/C/',
+            url: 'http://localhost:81/C/',
             dataType: 'json',
             data: JSON.stringify({
                 "code": code
@@ -220,13 +267,15 @@ var code;
    
    
     $('#btnRun').click(function() {
-        if (terminalOn == 'false') {
+       /*if (terminalOn == 'false') {
           	initTerm();
             terminalOn = 'true';
 
         } else {
             runC();
-        }
+        }*/
+		$("#terminal-container").empty();
+        runTC();
 
 		changeToRunTab();
     });
