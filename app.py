@@ -3,8 +3,12 @@ from tornado.ioloop import IOLoop
 from terminado import TermSocket, UniqueTermManager
 import terminado
 import os,sys
+import signal
+
+NO_SUCH_PROCESS_ERRNO = 3
+
 pid = str(os.getpid())
-pidfile = "/home/groot/webcompiler/xterm.pid"
+pidfile = "./xterm.pid"
 file(pidfile, 'w').write(pid)
 
 def _cast_unicode(s):
@@ -33,6 +37,22 @@ class CommandTermManager(UniqueTermManager):
         term = self.new_terminal()
         self.start_reading(term)
         return term
+
+    def client_disconnected(self, websocket):
+        """Send terminal SIGHUP when client disconnects."""
+        self.log.info("Websocket closed, sending SIGHUP to terminal.")
+        if websocket.terminal:
+            if os.name == 'nt':
+                websocket.terminal.kill()
+                # Immediately call the pty reader to process
+                # the eof and free up space
+                self.pty_read(websocket.terminal.ptyproc.fd)
+                return
+            try:
+                websocket.terminal.killpg(signal.SIGHUP)
+            except OSError as e:
+                if e.errno != NO_SUCH_PROCESS_ERRNO:
+                    raise 
 
 
 class SingleTermSocket(TermSocket):
@@ -70,8 +90,8 @@ if __name__ == '__main__':
     term_manager = CommandTermManager(shell_command=["./cmd"])
     handlers = [
                  (r"/websocket/(.*)", SingleTermSocket,{'term_manager':term_manager}),
-                 (r"/()", tornado.web.StaticFileHandler, {'path':'/home/groot/webcompiler/C.html'}),
-                 (r"/(.*)", tornado.web.StaticFileHandler, {'path':'/home/groot/webcompiler/.'})
+                 (r"/()", tornado.web.StaticFileHandler, {'path':'./C.html'}),
+                 (r"/(.*)", tornado.web.StaticFileHandler, {'path':'./.'})
                ]
     app = tornado.web.Application(handlers)
     app.listen(8079)

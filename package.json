@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/sknepal/webcompiler/issues"
   },
-  "homepage": "https://github.com/sknepal/webcompiler#readme"
+  "homepage": "https://github.com/sknepal/webcompiler#readme",
+  "dependencies": {
+    "xterm": "^3.7.0"
+  }
 }
