@@ -206,10 +206,11 @@ var code;
 	var heartbeatIntervalId;
 	
 	var runTC = function(filename){
+		urls = 'http://'+location.hostname+":81/C/";
 		var code = encodeURI(textarea.val().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"'));
 	         $.ajax({
 	             type: 'POST',
-	             url: 'http://localhost:81/C/',
+	             url: urls,
 	             dataType: 'json',
 	             data: JSON.stringify({
 	                 "code": code
